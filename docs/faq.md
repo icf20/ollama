@@ -148,6 +148,27 @@ If a different directory needs to be used, set the environment variable `OLLAMA_
 
 Refer to the section [above](#how-do-i-configure-ollama-server) for how to set environment variables on your platform.
 
+#### example with proper user
+by default the user and group is ollama and most likelly wont have the r+w permisions to the configured folder 
+
+```
+[Unit]
+Description=Ollama Service
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/ollama serve
+User=user
+Group=user
+Restart=always
+RestartSec=3
+Environment="PATH=/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/var/lib/flatpak/exports/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl"
+Environment="OLLAMA_MODELS=/dir/dir/ollama/models"
+[Install]
+WantedBy=default.target
+```
+
+
 ## Does Ollama send my prompts and answers back to ollama.com?
 
 No. Ollama runs locally, and conversation data does not leave your machine.
