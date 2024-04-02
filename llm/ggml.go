@@ -167,6 +167,29 @@ func (kv KV) ContextLength() uint64 {
 	return kv.u64(fmt.Sprintf("%s.context_length", kv.Architecture()))
 }
 
+func (kv KV) GraphSize(context, batch int) (int64, bool) {
+	// inp_embd: f32 * n_batch * n_embd
+	inputEmbd := 4 * kv.EmbeddingLength() * uint64(batch)
+
+	switch kv.Architecture() {
+	case "gemma":
+		// output: f32 * n_vocab * n_batch
+		tokens := kv["tokenizer.ggml.tokens"].([]any)
+		resultOutput := 4 * uint64(len(tokens)) * uint64(batch)
+		return int64(inputEmbd + resultOutput), true
+	case "llama":
+		// inp_pos: i32 n_embd
+		inputPos := kv.EmbeddingLength() / 2
+		// KQ_mask: f32 n_ctx * n_batch
+		kqMask := uint64(4 * context * batch)
+		// kq: f32 n_ctx * n_batch * n_head
+		kq := kqMask * kv.HeadCount()
+		return int64(4*inputEmbd + inputPos + kqMask + kq), true
+	}
+
+	return 0, false
+}
+
 type Tensor struct {
 	Name   string `json:"name"`
 	Kind   uint32 `json:"kind"`
